@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import { ERROR } from "./constants";
 import { getData } from "./cronCrontroller";
 import { clearAll, getMailinglist, sendCustomMessage } from "./mailinglistManager";
 import { addMail, removeMail } from "./userController";
@@ -21,6 +22,9 @@ router.get('/mailtest', async (req: express.Request, res: express.Response) => {
     res.send("OK");
 })
 
-router.get('/clear', validatePassword, async(req: express.Request, res: express.Response) => { if (await clearAll(req.body.password)) return res.send("OK"); else return res.send("ERROR") })
+router.get('/clear', async (req: express.Request, res: express.Response) => {
+    if (req.query.password && typeof req.query.password == "string")
+        if (await clearAll(req.query.password)===ERROR.NONE) return res.send("OK"); else return res.send("ERROR")
+})
 
 export { router }

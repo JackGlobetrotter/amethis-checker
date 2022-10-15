@@ -1,13 +1,12 @@
 import { body } from "express-validator";
 import express from 'express'
-const { check, validationResult } = require('express-validator');
+import {  validationResult } from 'express-validator';
 
 const validatePassword = [
 
     body('password')
         .not()
-        .isEmpty()
-        .bail(),
+        .isEmpty(),
     (req: express.Request, res: express.Response, next: express.NextFunction) => {
         const errors = validationResult(req);
         if (!errors.isEmpty())

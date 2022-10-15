@@ -14,3 +14,4 @@ tmp
 init.iv
 mailfile.txt
 dist
+**/*.http

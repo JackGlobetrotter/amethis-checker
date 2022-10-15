@@ -142,6 +142,8 @@ async function clearAll(pwd: string) {
         Key: mailfile,
     }).promise()
 
+    return ERROR.NONE;
+
 
 }
 
