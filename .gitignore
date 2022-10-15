@@ -13,3 +13,4 @@ tmp
 /.npmrc
 init.iv
 mailfile.txt
+dist
