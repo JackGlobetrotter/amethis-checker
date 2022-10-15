@@ -1,0 +1,15 @@
+.idea
+.vscode
+node_modules
+.env
+.DS_Store
+.scannerwork
+coverage
+*.log
+build
+docker/dev/datastore
+config/all.override.yaml
+tmp
+/.npmrc
+init.iv
+mailfile.txt
