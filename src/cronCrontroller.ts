@@ -31,7 +31,7 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                     const ml = await getMailinglist();
                     if (sendmail && ml.length > 0)
                         await mail.sendMail({
-                            from: "amethischecker@gmail.com",
+                            from: process.env.MAILADDRESS||"",
                             to: (await getMailinglist()).join(','),
                             subject: "Amethis a été mis à jour!!!",
                             text: "Amethis a été mis à jour!!!",
