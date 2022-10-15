@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import { getData } from "./cronCrontroller";
+import { getMailinglist, sendCustomMessage } from "./mailinglistManager";
 import { addMail, removeMail } from "./userController";
 import { validateMail, validatePassword } from './validator'
 
@@ -14,5 +15,10 @@ router.get('/', (req: express.Request, res: express.Response) => {
 router.post('/addMail', validateMail, validatePassword, addMail)
 
 router.post('/removeMail', validateMail, validatePassword, removeMail)
+
+router.get('/mailtest', async  (req: express.Request, res: express.Response) => {
+    await sendCustomMessage("Test message from amethis-checker", "TEST MESSAGE FROM AMETHIS-CHECKER", (await getMailinglist())[0]);
+    res.send("OK"); 
+})
 
 export { router }

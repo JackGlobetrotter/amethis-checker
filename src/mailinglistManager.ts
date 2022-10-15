@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import AWS from "aws-sdk";
+import { mail } from './mail';
 const s3 = new AWS.S3()
 
 const mailfile = process.env.MAILFILE || 'mailfile.txt';
@@ -40,6 +41,8 @@ const addMailAddress = async (mail: string, pwd: string) => {
         Key: mailfile,
         Body: await encrypt(JSON.stringify(list))
     }).promise()
+
+    await sendCustomMessage("Your address was successfully added to amethis-checker","You were added to amethis-checker",mail);
 }
 
 const removeMailAddress = async (mail: string, pwd: string) => {
@@ -63,6 +66,8 @@ const removeMailAddress = async (mail: string, pwd: string) => {
         Key: mailfile,
         Body: await encrypt(JSON.stringify(list))
     }).promise()
+
+    await     sendCustomMessage("Your address was successfully removed from amethis-checker","You removed from amethis-checker",mail);
 }
 
 async function fileExists(file: string) {
@@ -117,4 +122,16 @@ async function decrypt(data: string, pwd = "") {
     return decryptedData;
 }
 
-export { password, getMailinglist, addMailAddress, decrypt, encrypt, removeMailAddress }
+async function sendCustomMessage(message:string, title:string, address:string){
+
+    await mail.sendMail({
+        from: "amethischecker@gmail.com",
+        to: (await getMailinglist()).join(','),
+        subject: title,
+        text: message,
+        html: `<p>${message}</p>`
+    }).then(() => console.log('custom mails sucessfully send')).catch(() => console.log('error sending custom mails'))
+
+}
+
+export { password, getMailinglist, addMailAddress, decrypt, encrypt, removeMailAddress, sendCustomMessage }
