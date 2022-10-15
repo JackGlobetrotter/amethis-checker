@@ -2,14 +2,16 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import AWS from "aws-sdk";
 import { mail } from './mail';
+import { ERROR } from './constants';
 const s3 = new AWS.S3()
 
 const mailfile = process.env.MAILFILE || 'mailfile.txt';
 const ivfile = process.env.IVFILE || 'init.iv';
-let password: string; // = crypto.randomBytes(32).toString("hex");
+let auth_password = process.env.PASSWORDHASH || ''; // = crypto.randomBytes(32).toString("hex");
+let file_password = process.env.FILEPASSWORD || ''; // = crypto.randomBytes(32).toString("hex");
 const algorithm = "aes-256-cbc";
 
-const getMailinglist = async ():Promise<Array<string>> => {
+const getMailinglist = async (): Promise<Array<string>> => {
 
     let rawData = await fileExists(mailfile) ? (await s3.getObject({
         Bucket: process.env.BUCKET as string,
@@ -21,12 +23,8 @@ const getMailinglist = async ():Promise<Array<string>> => {
 }
 
 const addMailAddress = async (mail: string, pwd: string) => {
- 
-    if (bcrypt.compareSync(pwd, process.env.PASSWORDHASH || "")) {
-        if (!password || password === "")
-            password = pwd;
-    }
-    else { throw new Error("Wrong passowrd!!!") }
+
+    if (!bcrypt.compareSync(pwd, auth_password)) return ERROR.WRONG_PASSWORD;
 
     const file = await fileExists(mailfile) ? await s3.getObject({
         Bucket: process.env.BUCKET as string,
@@ -42,15 +40,12 @@ const addMailAddress = async (mail: string, pwd: string) => {
         Body: await encrypt(JSON.stringify(list))
     }).promise()
 
-    await sendCustomMessage("Your address was successfully added to amethis-checker","You were added to amethis-checker",mail);
+    await sendCustomMessage("Your address was successfully added to amethis-checker", "You were added to amethis-checker", mail);
+    return ERROR.NONE;
 }
 
 const removeMailAddress = async (mail: string, pwd: string) => {
-    if (bcrypt.compareSync(pwd, process.env.PASSWORDHASH || "")) {
-        if (!password || password === "")
-            password = pwd;
-    }
-    else { throw new Error("Wrong passowrd!!!") }
+    if (!bcrypt.compareSync(pwd, auth_password)) return ERROR.WRONG_PASSWORD; 
 
     const file = await fileExists(mailfile) ? await s3.getObject({
         Bucket: process.env.BUCKET as string,
@@ -67,7 +62,8 @@ const removeMailAddress = async (mail: string, pwd: string) => {
         Body: await encrypt(JSON.stringify(list))
     }).promise()
 
-    await     sendCustomMessage("Your address was successfully removed from amethis-checker","You removed from amethis-checker",mail);
+    await sendCustomMessage("Your address was successfully removed from amethis-checker", "Your address has been removed from amethis-checker", mail);
+    return ERROR.NONE;
 }
 
 async function fileExists(file: string) {
@@ -108,25 +104,25 @@ async function getIV() {
 }
 
 async function encrypt(data: string) {
-    const cipher = crypto.createCipheriv(algorithm, Buffer.from(password, "hex"), await getIV());
+    const cipher = crypto.createCipheriv(algorithm, Buffer.from(file_password, "hex"), await getIV());
     let encryptedData = cipher.update(data, "utf-8", "hex");
     encryptedData += cipher.final("hex");
     return encryptedData;
 }
 
 async function decrypt(data: string, pwd = "") {
-    if (pwd === "") pwd = password;
+    if (pwd === "") pwd = file_password;
     const decipher = crypto.createDecipheriv(algorithm, Buffer.from(pwd, "hex"), await getIV());
     let decryptedData = decipher.update(data, "hex", "utf-8");
     decryptedData += decipher.final("utf-8");
     return decryptedData;
 }
 
-async function sendCustomMessage(message:string, title:string, address:string){
+async function sendCustomMessage(message: string, title: string, address: string) {
 
     await mail.sendMail({
         from: "amethischecker@gmail.com",
-        to: (await getMailinglist()).join(','),
+        to: address,
         subject: title,
         text: message,
         html: `<p>${message}</p>`
@@ -134,4 +130,19 @@ async function sendCustomMessage(message:string, title:string, address:string){
 
 }
 
-export { password, getMailinglist, addMailAddress, decrypt, encrypt, removeMailAddress, sendCustomMessage }
+async function clearAll(pwd: string) {
+    if (!bcrypt.compareSync(pwd, auth_password)) return ERROR.WRONG_PASSWORD
+
+    await s3.deleteObject({
+        Bucket: process.env.BUCKET as string,
+        Key: ivfile,
+    }).promise()
+    await s3.deleteObject({
+        Bucket: process.env.BUCKET as string,
+        Key: mailfile,
+    }).promise()
+
+
+}
+
+export { file_password, getMailinglist, addMailAddress, decrypt, encrypt, removeMailAddress, sendCustomMessage, clearAll }
