@@ -1,16 +1,16 @@
 import { Request, Response } from 'express'
 import { addMailAddress, removeMailAddress } from './mailinglistManager'
 
-const addMail = (req: Request, res: Response): Response => {
+const addMail = async (req: Request, res: Response): Promise<Response> => {
 
-    addMailAddress(req.body.email, req.body.password); 
+    await addMailAddress(req.body.email, req.body.password); 
     return res.send("OK")
 
 }
 
-const removeMail = (req: Request, res: Response): Response => {
+const removeMail = async(req: Request, res: Response): Promise<Response> => {
 
-    removeMailAddress(req.body.email, req.body.password); 
+    await removeMailAddress(req.body.email, req.body.password); 
     return res.send('OK');
 }
 
