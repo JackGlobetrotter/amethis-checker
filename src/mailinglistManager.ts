@@ -12,13 +12,16 @@ let file_password = process.env.FILEPASSWORD || ''; // = crypto.randomBytes(32).
 const algorithm = "aes-256-cbc";
 
 const getMailinglist = async (): Promise<Array<string>> => {
-
-    let rawData = await fileExists(mailfile) ? (await s3.getObject({
-        Bucket: process.env.BUCKET as string,
-        Key: mailfile,
-    }).promise()).Body!.toString() : JSON?.stringify([])
-    const data = JSON.parse(await decrypt(rawData));
-    return data;
+    const mailFileExists = await fileExists(mailfile);
+    if (mailFileExists) {
+        const rawData = (await s3.getObject({
+            Bucket: process.env.BUCKET as string,
+            Key: mailfile,
+        }).promise()).Body!.toString()
+        const data = JSON.parse(await decrypt(rawData));
+        return data;
+    } else
+        return []
 
 }
 
@@ -45,7 +48,7 @@ const addMailAddress = async (mail: string, pwd: string) => {
 }
 
 const removeMailAddress = async (mail: string, pwd: string) => {
-    if (!bcrypt.compareSync(pwd, auth_password)) return ERROR.WRONG_PASSWORD; 
+    if (!bcrypt.compareSync(pwd, auth_password)) return ERROR.WRONG_PASSWORD;
 
     const file = await fileExists(mailfile) ? await s3.getObject({
         Bucket: process.env.BUCKET as string,
