@@ -127,7 +127,7 @@
                 body: new URLSearchParams(new FormData(event.target)),
             }).then(function (response) {
                 if (response.ok) {
-                    alert(response.statusText);
+                    alert(`${remove?"Supprimé":"Ajouté"} avec succès.{response.statusText}`);
                 }
                 return Promise.reject(response);
             }).then(function (data) {
