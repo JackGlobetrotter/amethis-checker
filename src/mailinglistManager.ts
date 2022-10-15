@@ -124,7 +124,7 @@ async function decrypt(data: string, pwd = "") {
 async function sendCustomMessage(message: string, title: string, address: string) {
 
     await mail.sendMail({
-        from: "amethischecker@gmail.com",
+        from: process.env.MAILADDRESS||"",
         to: address,
         subject: title,
         text: message,
