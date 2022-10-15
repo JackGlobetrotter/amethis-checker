@@ -11,9 +11,9 @@ const INTERVALL = 1800000;
 
 
 
-const getData = async (req: Request, res: Response): Promise<Response> => {
+const getData = async (req: Request, expressResponse: Response): Promise<Response> => {
     console.log('checking now');
-    axios({
+    return axios({
         method: 'post',
         url: 'https://amethis.doctorat-bretagneloire.fr/amethis-server/formation/gestion/getAll',
         headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' },
@@ -30,7 +30,7 @@ const getData = async (req: Request, res: Response): Promise<Response> => {
                     data = res.data.data;
                     const ml = await getMailinglist();
                     if (sendmail && ml.length > 0)
-                        mail.sendMail({
+                        await mail.sendMail({
                             from: "amethischecker@gmail.com",
                             to: (await getMailinglist()).join(','),
                             subject: "Amethis a été mis à jour!!!",
@@ -39,9 +39,11 @@ const getData = async (req: Request, res: Response): Promise<Response> => {
                         }).then(() => console.log('mails sucessfully send')).catch(() => console.log('error sending mails'))
                 }
             }
+
+            return expressResponse.send("Cron task executed successfully");
         })
-        .catch(ex => console.log(ex))
-    return res.send("OK");
+        .catch(ex => {console.log(ex)
+            return expressResponse.send("Cron task execution failed");})
 }
 
 
