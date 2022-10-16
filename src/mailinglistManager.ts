@@ -150,4 +150,4 @@ async function clearAll(pwd: string) {
 
 }
 
-export { file_password, getMailinglist, addMailAddress, decrypt, encrypt, removeMailAddress, sendCustomMessage, clearAll }
+export { file_password, getMailinglist, addMailAddress, decrypt, encrypt, removeMailAddress, sendCustomMessage, clearAll, fileExists }

@@ -2,13 +2,11 @@ import axios from 'axios'
 import { Response, Request } from 'express';
 import jsum from 'jsum'
 import { mail } from './mail';
-import { getMailinglist } from './mailinglistManager';
+import { fileExists, getMailinglist } from './mailinglistManager';
+import AWS from "aws-sdk";
+const s3 = new AWS.S3()
 
-
-let data = new Array();
-
-const INTERVALL = 1800000;
-
+const amethisFile = process.env.AMETHISLISTFILENAME || 'amethis.txt';
 
 
 const getData = async (req: Request, expressResponse: Response): Promise<Response> => {
@@ -22,16 +20,30 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
         .then(async (res) => {
             console.log('got data');
             if (res.status === 200 && Array.isArray(res.data.data)) {
+
+                const file = await fileExists(amethisFile) ? await s3.getObject({
+                    Bucket: process.env.BUCKET as string,
+                    Key: amethisFile,
+                }).promise() : undefined;
+                const rawData = file && file.Body ? file.Body.toString() : "";
+
+                const data: Array<string> = rawData.length > 0 ? JSON.parse(rawData) : new Array();
+
                 if (jsum.digest(data, "MD5", "hex") !== jsum.digest(res.data.data, "MD5", "hex")) {
                     console.log(`updating because: 1: ${jsum.digest(data, "MD5", "hex")}`)
                     console.log(`2: ${jsum.digest(res.data.data, "MD5", "hex")}`)
                     var sendmail = data.length !== 0 && res.data.data.length >= data.length;
-                    data.splice(0, res.data.data.length, ...res.data.data)
-                    data = res.data.data;
+
+                    await s3.putObject({
+                        Bucket: process.env.BUCKET as string,
+                        Key: amethisFile,
+                        Body: JSON.stringify(res.data.data)
+                    }).promise()
+
                     const ml = await getMailinglist();
                     if (sendmail && ml.length > 0)
                         await mail.sendMail({
-                            from: process.env.MAILADDRESS||"",
+                            from: process.env.MAILADDRESS || "",
                             to: (await getMailinglist()).join(','),
                             subject: "Amethis a été mis à jour!!!",
                             text: "Amethis a été mis à jour!!!",
@@ -42,8 +54,10 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
 
             return expressResponse.send("Cron task executed successfully");
         })
-        .catch(ex => {console.log(ex)
-            return expressResponse.send("Cron task execution failed");})
+        .catch(ex => {
+            console.log(ex)
+            return expressResponse.send("Cron task execution failed");
+        })
 }
 
 
