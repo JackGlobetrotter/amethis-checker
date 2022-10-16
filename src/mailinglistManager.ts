@@ -144,6 +144,10 @@ async function clearAll(pwd: string) {
         Bucket: process.env.BUCKET as string,
         Key: mailfile,
     }).promise()
+    await s3.deleteObject({
+        Bucket: process.env.BUCKET as string,
+        Key:  process.env.AMETHISLISTFILENAME || 'amethis.txt',
+    }).promise()
 
     return ERROR.NONE;
 
