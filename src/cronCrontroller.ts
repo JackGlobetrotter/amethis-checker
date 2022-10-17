@@ -34,8 +34,7 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                     console.log(`2: ${jsum.digest(res.data.data, "MD5", "hex")}`)
                     const oldIds = data.map((i: any) => i.id);
 
-                    var sendmail = data.length !== 0 && (res.data.data.length >= data.length
-                        || (res.data.data.filter((i: any) => !oldIds.includes(i.id))).length > 0)
+                    var sendmail = data.length !== 0 && (res.data.data.filter((i: any) => !oldIds.includes(i.id))).length > 0
                         ; //only send if new data available and not on olddata change
                     console.log(`old data lenght :${data.length} vs new data: ${res.data.data.length}`)
                     console.log(`New ids :${(res.data.data.filter((i: any) => !oldIds.includes(i.id))).map((i: any) => `${i.id}: ${i.intitule}`).join()}`)
