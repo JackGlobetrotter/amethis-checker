@@ -33,12 +33,12 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                     console.log(`updating because: 1: ${jsum.digest(data, "MD5", "hex")}`)
                     console.log(`2: ${jsum.digest(res.data.data, "MD5", "hex")}`)
                     const oldIds = data.map((i: any) => i.id);
-                    
+
                     var sendmail = data.length !== 0 && (res.data.data.length >= data.length
                         || (res.data.data.filter((i: any) => !oldIds.includes(i.id))).length > 0)
                         ; //only send if new data available and not on olddata change
                     console.log(`old data lenght :${data.length} vs new data: ${res.data.data.length}`)
-                    console.log(`New ids :${(res.data.data.filter((i: any) => !oldIds.includes(i.id))).map((i:any)=>i.id).join()}`)
+                    console.log(`New ids :${(res.data.data.filter((i: any) => !oldIds.includes(i.id))).map((i: any) => `${i.id}: ${i.intitule}`).join()}`)
                     await s3.putObject({
                         Bucket: process.env.BUCKET as string,
                         Key: amethisFile,
@@ -51,8 +51,8 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                             from: process.env.MAILADDRESS || "",
                             to: (await getMailinglist()).join(','),
                             subject: "Amethis a été mis à jour!!!",
-                            text: "Amethis a été mis à jour!!!",
-                            html: "<p>Amethis a été mis à jour!!!</p>"
+                            text: `Amethis a été mis à jour!!! Formations ajoutées: ${(res.data.data.filter((i: any) => !oldIds.includes(i.id))).map((i: any) => `${i.intitule} (${i.libelleCategorie})`).join()}`,
+                            html: `<p>Amethis a été mis à jour!!!</p>Formations ajoutées: </br>${(res.data.data.filter((i: any) => !oldIds.includes(i.id))).map((i: any) => `${i.intitule} (${i.libelleCategorie})`).join('</br>')}`
                         }).then(() => console.log('mails sucessfully send')).catch(() => console.log('error sending mails'))
                 }
             }
