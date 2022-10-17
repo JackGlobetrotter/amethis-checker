@@ -32,7 +32,11 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                 if (jsum.digest(data, "MD5", "hex") !== jsum.digest(res.data.data, "MD5", "hex")) {
                     console.log(`updating because: 1: ${jsum.digest(data, "MD5", "hex")}`)
                     console.log(`2: ${jsum.digest(res.data.data, "MD5", "hex")}`)
-                    var sendmail = data.length !== 0 && res.data.data.length >= data.length;
+                    const oldIds = data.map((i: any) => i.id);
+                    res.data.data.pop();
+                    var sendmail = data.length !== 0 && (res.data.data.length >= data.length
+                        || (res.data.data.filter((i: any) => !oldIds.includes(i.id))).length > 0)
+                        ; //only send if new data available and not on olddata change
 
                     await s3.putObject({
                         Bucket: process.env.BUCKET as string,
