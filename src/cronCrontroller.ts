@@ -15,7 +15,7 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
         method: 'post',
         url: 'https://amethis.doctorat-bretagneloire.fr/amethis-server/formation/gestion/getAll',
         headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-        data: 'page=0&size=1000&sort=code&direction=1&search=%7B%22etatId%22:%5B%222%22%5D,%22periodeRegExp%22:%5B%22next%22%5D%7D&type=vueFormations'
+        data: 'page=0&size=1000&sort=code&direction=1&search=%7B%22etatId%22:%5B%222%22%5D,%22periodeRegExp%22:%5B%22now%22,%22next%22%5D%7D&type=vueFormations'
     })
         .then(async (res) => {
             console.log('got data');
