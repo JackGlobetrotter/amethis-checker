@@ -116,7 +116,7 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
 function sendMail(data: any) {
     mail.sendMail({
         from: process.env.MAILADDRESS || "",
-        bcc: "jakob.dickert@outlook.com", //(await getMailinglist()).join(','),
+        bcc: (await getMailinglist()).join(','),
         subject: "Amethis a été mis à jour!!!",
         text: `Amethis a été mis à jour!!! Formations ajoutées: ${data.map((i: any) => `${i.code}: ${i.intitule} (${i.libelleCategorie}) - ${i.dureeFormatee} par ${i.libelleOrganisateur}`).join()}`,
         html: `<p>Amethis a été mis à jour!!!</p>Formations ajoutées: </br>${data.map((i: any) => `${i.code}: <a href="https://amethis.doctorat-bretagneloire.fr/amethis-client/formation/gestion/formation/${i.id}">${i.intitule}</a> (${i.libelleCategorie}, ${i.dureeFormatee}) par ${i.libelleOrganisateur}`).join('</br>')}`
