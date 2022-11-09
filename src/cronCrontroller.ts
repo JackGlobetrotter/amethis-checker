@@ -90,7 +90,7 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
 
                         await mail.sendMail({
                             from: process.env.MAILADDRESS || "",
-                            bcc: "jakob.dickert@outlook.com", //(await getMailinglist()).join(','),
+                            bcc: (await getMailinglist()).join(','),
                             subject: "Amethis a été mis à jour!!!",
                             text: `Amethis a été mis à jour!!! Formations ajoutées: ${mailData.map((i: any) => `${i.code}: ${i.intitule} (${i.libelleCategorie}) - ${i.dureeFormatee} par ${i.libelleOrganisateur}`).join()}`,
                             html: `<p>Amethis a été mis à jour!!!</p>Formations ajoutées: </br>${mailData.map((i: any) => `${i.code}: <b><a href="https://amethis.doctorat-bretagneloire.fr/amethis-client/formation/gestion/formation/${i.id}">${i.intitule}</a> (${i.dureeFormatee})</b> - ${i.libelleCategorie} - <i> ${i.libelleOrganisateur}</i>
