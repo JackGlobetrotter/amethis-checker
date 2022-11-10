@@ -113,7 +113,7 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
 }
 
 
-function sendMail(data: any) {
+async function sendMail(data: any) {
     mail.sendMail({
         from: process.env.MAILADDRESS || "",
         bcc: (await getMailinglist()).join(','),
