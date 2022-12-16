@@ -3,6 +3,7 @@ import path from "path";
 import { ERROR } from "./constants";
 import { getData } from "./cronCrontroller";
 import { clearAll, getMailinglist, sendCustomMessage } from "./mailinglistManager";
+import { addMailToReminder, checkReminder, clearReminders } from "./reminderController";
 import { addMail, removeMail } from "./userController";
 import { validateMail, validatePassword } from './validator'
 
@@ -26,5 +27,10 @@ router.get('/clear', async (req: express.Request, res: express.Response) => {
     if (req.query.password && typeof req.query.password == "string")
         if (await clearAll(req.query.password)===ERROR.NONE) return res.send("OK"); else return res.send("ERROR")
 })
+
+router.get('/clearReminders', clearReminders)
+
+router.get('/reminder', addMailToReminder)
+router.post('/checkReminder', checkReminder)
 
 export { router }

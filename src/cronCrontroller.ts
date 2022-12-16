@@ -4,6 +4,7 @@ import jsum from 'jsum'
 import { mail } from './mail';
 import { fileExists, getMailinglist } from './mailinglistManager';
 import AWS from "aws-sdk";
+import { addReminder } from './reminderController';
 const s3 = new AWS.S3()
 
 const amethisFile = process.env.AMETHISLISTFILENAME || 'amethis.txt';
@@ -27,7 +28,9 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                 }).promise() : undefined;
                 const rawData = file && file.Body ? file.Body.toString() : "";
 
-                const data: Array<string> = rawData.length > 0 ? JSON.parse(rawData) : new Array();                
+                let data: Array<string> = rawData.length > 0 ? JSON.parse(rawData) : new Array();
+
+                data = data.filter((d: any) => d.id !== '2553' && d.id !== '2490') //2490
 
 
                 if (jsum.digest(data, "MD5", "hex") !== jsum.digest(res.data.data, "MD5", "hex")) {
@@ -40,10 +43,10 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                     console.log(`old data lenght :${data.length} vs new data: ${res.data.data.length}`)
                     console.log(`New ids :${(res.data.data.filter((i: any) => !oldIds.includes(i.id))).map((i: any) => `${i.id}: ${i.intitule}`).join()}`)
                     await s3.putObject({
-                        Bucket: process.env.BUCKET as string,
-                        Key: amethisFile,
-                        Body: JSON.stringify(res.data.data)
-                    }).promise()
+                         Bucket: process.env.BUCKET as string,
+                         Key: amethisFile,
+                         Body: JSON.stringify(res.data.data)
+                     }).promise()
 
                     const ml = await getMailinglist();
 
@@ -58,10 +61,13 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                                 libelleCategorie: i.libelleCategorie,
                                 dureeFormatee: i.dureeFormatee,
                                 libelleOrganisateur: i.libelleOrganisateur,
-                                seances: []
+                                seances: [],
+                                convocation: {}
                             }
 
                         })
+
+                        //get sessions
                         for (let i = 0; i < mailData.length; i++) {
                             await axios(
                                 {
@@ -86,20 +92,66 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                                     console.log(e)
                                 })
 
+                            //get convocation dates
+                            await axios(
+                                {
+                                    method: 'post',
+                                    url: 'https://amethis.doctorat-bretagneloire.fr/amethis-server/formation/gestion/getAll',
+                                    headers: { 'content-type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+                                    data: `page=0
+                                    &size=-1
+                                    &sort=libelleSiteSession,%20sessionNom
+                                    &direction=1
+                                    &search=%7B%22formationId%22:%20${mailData[i].id},%22etatId%22%20:%20%222%22%7D
+                                    &type=vueSessions`
+                                })
+                                .then(e => {
+                                    if (e.status === 200) {
+                                        if (e.data.data.length > 0) {
+                                            const start = Date.parse(e.data.data[0].dateDebutCandidatureIso);
+                                            const today = new Date().setHours(1, 0, 0, 0);
+                                            if (start > today) {
+                                                addReminder(mailData[i].id, start, Date.parse(e.data.data[0].dateFinCandidatureIso));
+
+                                                mailData[i].convocation = e.data.data[0];
+                                            }
+                                            else {
+
+                                                mailData[i].convocation = null;
+                                            }
+
+                                        }
+
+                                    }
+                                    else console.log(`ERROR fetching data ${mailData[i].id}: ${JSON.stringify(e)}`)
+
+                                })
+                                .catch(e => {
+                                    console.log(e)
+                                })
+
+
                         }
 
-                        await mail.sendMail({
-                            from: process.env.MAILADDRESS || "",
-                            bcc: (await getMailinglist()).join(','),
-                            subject: "Amethis a été mis à jour!!!",
-                            text: `Amethis a été mis à jour!!! Formations ajoutées: ${mailData.map((i: any) => `${i.code}: ${i.intitule} (${i.libelleCategorie}) - ${i.dureeFormatee} par ${i.libelleOrganisateur}`).join()}`,
-                            html: `<p>Amethis a été mis à jour!!!</p>Formations ajoutées: </br>${mailData.map((i: any) => `${i.code}: <b><a href="https://amethis.doctorat-bretagneloire.fr/amethis-client/formation/gestion/formation/${i.id}">${i.intitule}</a> (${i.dureeFormatee})</b> - ${i.libelleCategorie} - <i> ${i.libelleOrganisateur}</i>
-                            <ul>
-                            ${i.seances.map((seance: any) => {
-                                return `<li>${seance.dateSeance} (${seance.heureDebut}-${seance.heureFin}) - ${seance.adresse} (${seance.libelleSiteSession})</li>`
-                            }).join('')}
-                            </ul>`).join('</br>')}`
-                        }).then(() => console.log('mails sucessfully send')).catch(() => console.log('error sending mails'))
+                        (await getMailinglist()).forEach(async mailAdresse=>{
+                            await mail.sendMail({
+                                from: process.env.MAILADDRESS || "",
+                                to: mailAdresse,
+                                subject: "Amethis a été mis à jour!!!",
+                                text: `Amethis a été mis à jour!!! Formations ajoutées: ${mailData.map((i: any) => `${i.code}: ${i.intitule} (${i.libelleCategorie}) - ${i.dureeFormatee} par ${i.libelleOrganisateur}`).join()}`,
+                                html: `<p>Amethis a été mis à jour!!!</p>
+                                Formations ajoutées: </br>${mailData.map((i: any) => `${i.code}: <b>
+                                <a href="https://amethis.doctorat-bretagneloire.fr/amethis-client/formation/gestion/formation/${i.id}">${i.intitule}</a> 
+                                (${i.dureeFormatee})</b> - ${i.libelleCategorie} - <i> ${i.libelleOrganisateur}</i>
+                                ${i.convocation!==null? `</p>L'inscription ouvre le ${i.convocation.dateDebutCandidature}. <i><a href="https://amethis.cyclic.app/reminder?id=${i.id}&mail=${mailAdresse}">Inscrition au rappel pour l'inscription à cette formation</a></i>.` : ""}
+                                <ul>
+                                ${i.seances.map((seance: any) => {
+                                    return `<li>${seance.dateSeance} (${seance.heureDebut}-${seance.heureFin}) - ${seance.adresse} (${seance.libelleSiteSession})</li>`
+                                }).join('')}
+                                </ul>`).join('</br>')}`
+                            }).then(() => console.log('mails sucessfully send to:'+mailAdresse)).catch(() => console.log('error sending mails'))
+                        })
+                     
                     }
                 }
             }
@@ -111,17 +163,5 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
             return expressResponse.send("Cron task execution failed");
         })
 }
-
-
-async function sendMail(data: any) {
-    mail.sendMail({
-        from: process.env.MAILADDRESS || "",
-        bcc: (await getMailinglist()).join(','),
-        subject: "Amethis a été mis à jour!!!",
-        text: `Amethis a été mis à jour!!! Formations ajoutées: ${data.map((i: any) => `${i.code}: ${i.intitule} (${i.libelleCategorie}) - ${i.dureeFormatee} par ${i.libelleOrganisateur}`).join()}`,
-        html: `<p>Amethis a été mis à jour!!!</p>Formations ajoutées: </br>${data.map((i: any) => `${i.code}: <a href="https://amethis.doctorat-bretagneloire.fr/amethis-client/formation/gestion/formation/${i.id}">${i.intitule}</a> (${i.libelleCategorie}, ${i.dureeFormatee}) par ${i.libelleOrganisateur}`).join('</br>')}`
-    }).then(() => console.log('mails sucessfully send')).catch(() => console.log('error sending mails'))
-}
-
 
 export { getData }
