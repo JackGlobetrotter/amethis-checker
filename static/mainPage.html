@@ -4,13 +4,18 @@
 
 <head>
 
-    <title>Add mail adress</title>
+    <title>Admethis Checker</title>
 
     <meta charset="UTF-8" />
 
     <meta name="viewport" content="width=device-width,initial-scale=1" />
 
     <meta name="description" content="" />
+
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+
     <style>
         .switch {
             position: relative;
@@ -96,41 +101,65 @@
             border-radius: 50%;
         }
     </style>
+
+    <script src="https://code.jquery.com/jquery-3.6.2.slim.min.js"
+        integrity="sha256-E3P3OaTZH+HlEM7f1gdAT3lHAn4nWBZXuYe89DFg2d0=" crossorigin="anonymous"></script>
 </head>
 
 <body style="margin: 50px;">
+    <p class="fs-1">Inscription sur la liste de diffusion Amethis-Checker</p>
+    <p>
+        Afin d'ajouter ou supprimer votre adresse  mail de la liste de diffusion, veuillez la rentrer dans le champ
+        ci-dessous.
+        Le mot de passe à fournir vous a été transmis dans le mail d'information.
+    </p>
+    <form id="addMailForm" name="addMailForm" class="mb-3 needs-validation">
+        <div class="col-md-4">
+            <label for="email" class="form-label">Adresse  Mail</label><br>
+            <input type="email" class="form-control" id="email" name="email">
 
-    <form id="addMailForm" name="addMailForm">
-        <label for="email">Adresse Mail</label><br>
-        <input type="email" id="email" name="email"><br>
-        <label for="password">Mot de passe</label><br>
-        <input type="password" id="password" name="password"><br><br>
-        <label class="switch">
-            <input type="checkbox" checked id="removeSwitch">
-            <div class="slider round">
-                <span class="on">Ajouter</span>
-                <span class="off">Supprimer</span>
+        </div>
+        <div class="col-md-4">
+            <label for="password" class="form-label">Mot de passe</label><br>
+            <input type="password" class="form-control" id="password" name="password" required>
+            <div class="invalid-feedback">
+                Merci de renseigner le mot de passe fourni dans le mail d'information.
             </div>
-        </label>
-        </br>
-        </br>
-        <input type="submit" value="Submit">
+            <br>
+        </div>
+        <div class="col-12">
+            <button onclick="removeMail();" type="button" class="btn btn-warning">Supprimer</button>
+            <button onclick="addMail();" type="button" class="btn btn-primary">Ajouter</button>
+        </div>
 
     </form>
     <script>
-        document.querySelector("#addMailForm").onsubmit = (event) => {
-            event.preventDefault();
 
-            let remove = !document.querySelector('#removeSwitch').checked;
+
+        function removeMail() {
+            request(true);
+        }
+
+        function addMail() {
+            request(false);
+        }
+
+        function request(remove) {
+
+            $("#password").removeClass("is-invalid");
+            $("#email").addClass("is-invalid");
+
             fetch(remove ? '/removeMail' : '/addMail', {
                 method: 'POST',
-                body: new URLSearchParams(new FormData(event.target)),
+                body: new URLSearchParams(new FormData(document.getElementById('addMailForm'))),
             }).then(function (response) {
                 if (response.ok) {
-                    alert(`${remove?"Supprimé":"Ajouté"} avec succès.${response.statusText}`);
+                    alert(`${remove ? "Supprimé" : "Ajouté"} avec succès.${response.statusText}`);
                 }
-                if(response.status===401) {
-                    alert("Mauvais mot de passe"); 
+                if (response.status === 401) {
+
+                    $("#password").addClass("is-invalid");
+                    alert("Mauvais mot de passe");
                 }
                 return Promise.reject(response);
             }).then(function (data) {
@@ -138,8 +167,13 @@
             }).catch(function (error) {
                 console.warn(error);
             });
-
         }
+        $("form").on("submit", (e) => e.preventDefault())
+
+        $("form button").click(function () {
+            $("button[type=submit]", $(this).parents("form")).removeAttr("clicked");
+            $(this).attr("clicked", "true");
+        });
 
     </script>
 
