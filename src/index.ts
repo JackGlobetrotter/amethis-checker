@@ -4,7 +4,7 @@ dotenv.config();
 
 import express from "express";
 import { router } from "./router";
-console.log(process.env.NODE_ENV)
+
 const PORT: number = parseInt(process.env.PORT || "5000" as string, 10);
 
 const app = express();

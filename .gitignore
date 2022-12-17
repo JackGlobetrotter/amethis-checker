@@ -15,3 +15,4 @@ mailfile.txt
 dist
 **/*.http
 **/*.htm*
+.vscode

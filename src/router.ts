@@ -18,12 +18,12 @@ router.post('/addMail', validateMail, validatePassword, addMail)
 
 router.post('/removeMail', validateMail, validatePassword, removeMail)
 
-router.get('/mailtest', async (req: express.Request, res: express.Response) => {
-    await sendCustomMessage("Test message from amethis-checker", "TEST MESSAGE FROM AMETHIS-CHECKER", (await getMailinglist())[0]);
-    res.send("OK");
-})
-
 if (process.env.NODE_ENV === "development") {
+
+    router.get('/mailtest', async (req: express.Request, res: express.Response) => {
+        await sendCustomMessage("Test message from amethis-checker", "TEST MESSAGE FROM AMETHIS-CHECKER", (await getMailinglist())[0]);
+        res.send("OK");
+    })
     router.get('/clear', async (req: express.Request, res: express.Response) => {
         if (req.query.password && typeof req.query.password == "string")
             if (await clearAll(req.query.password) === ERROR.NONE) return res.send("OK"); else return res.send("ERROR")
