@@ -23,14 +23,16 @@ router.get('/mailtest', async (req: express.Request, res: express.Response) => {
     res.send("OK");
 })
 
-router.get('/clear', async (req: express.Request, res: express.Response) => {
-    if (req.query.password && typeof req.query.password == "string")
-        if (await clearAll(req.query.password)===ERROR.NONE) return res.send("OK"); else return res.send("ERROR")
-})
+if (process.env.NODE_ENV !== "production") {
+    router.get('/clear', async (req: express.Request, res: express.Response) => {
+        if (req.query.password && typeof req.query.password == "string")
+            if (await clearAll(req.query.password) === ERROR.NONE) return res.send("OK"); else return res.send("ERROR")
+    })
 
-router.get('/clearReminders', clearReminders)
+    router.get('/clearReminders', clearReminders)
+}
 
-router.get('/reminder', addMailToReminder)
+router.get('/addReminder', addMailToReminder)
 router.post('/checkReminder', checkReminder)
 
 export { router }

@@ -143,7 +143,7 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                                 Formations ajoutées: </br>${mailData.map((i: any) => `${i.code}: <b>
                                 <a href="https://amethis.doctorat-bretagneloire.fr/amethis-client/formation/gestion/formation/${i.id}">${i.intitule}</a> 
                                 (${i.dureeFormatee})</b> - ${i.libelleCategorie} - <i> ${i.libelleOrganisateur}</i>
-                                ${i.convocation!==null? `</p>L'inscription ouvre le ${i.convocation.dateDebutCandidature}. <i><a href="https://amethis.cyclic.app/reminder?id=${i.id}&mail=${mailAdresse}">Inscrition au rappel pour l'inscription à cette formation</a></i>.` : ""}
+                                ${i.convocation!==null? `</p>L'inscription ouvre le ${i.convocation.dateDebutCandidature}. <i><a href="https://amethis.cyclic.app/addReminder?id=${i.id}&mail=${mailAdresse}">Inscrition au rappel pour l'inscription à cette formation</a></i>.` : ""}
                                 <ul>
                                 ${i.seances.map((seance: any) => {
                                     return `<li>${seance.dateSeance} (${seance.heureDebut}-${seance.heureFin}) - ${seance.adresse} (${seance.libelleSiteSession})</li>`
