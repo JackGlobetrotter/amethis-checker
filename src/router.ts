@@ -23,7 +23,7 @@ router.get('/mailtest', async (req: express.Request, res: express.Response) => {
     res.send("OK");
 })
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV === "development") {
     router.get('/clear', async (req: express.Request, res: express.Response) => {
         if (req.query.password && typeof req.query.password == "string")
             if (await clearAll(req.query.password) === ERROR.NONE) return res.send("OK"); else return res.send("ERROR")
