@@ -5,6 +5,7 @@ import { mail } from './mail';
 import { fileExists, getMailinglist } from './mailinglistManager';
 import AWS from "aws-sdk";
 import { addReminder } from './reminderController';
+import { DEV } from '.';
 const s3 = new AWS.S3()
 
 const amethisFile = process.env.AMETHISLISTFILENAME || 'amethis.txt';
@@ -43,12 +44,12 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                     console.log(`old data lenght :${data.length} vs new data: ${res.data.data.length}`)
                     console.log(`New ids :${(res.data.data.filter((i: any) => !oldIds.includes(i.id))).map((i: any) => `${i.id}: ${i.intitule}`).join()}`)
                     await s3.putObject({
-                         Bucket: process.env.BUCKET as string,
-                         Key: amethisFile,
-                         Body: JSON.stringify(res.data.data)
-                     }).promise()
+                        Bucket: process.env.BUCKET as string,
+                        Key: amethisFile,
+                        Body: JSON.stringify(res.data.data)
+                    }).promise()
 
-                    const ml = await getMailinglist();
+                    const ml = DEV ? [process.env.DEV_MAIL] : await getMailinglist();
 
 
                     if (sendmail && ml.length > 0) {
@@ -133,7 +134,7 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
 
                         }
 
-                        (await getMailinglist()).forEach(async mailAdresse=>{
+                        (DEV ? [process.env.DEV_MAIL] : await getMailinglist()).forEach(async mailAdresse => {
                             await mail.sendMail({
                                 from: process.env.MAILADDRESS || "",
                                 to: mailAdresse,
@@ -143,15 +144,15 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                                 Formations ajoutées: </br>${mailData.map((i: any) => `${i.code}: <b>
                                 <a href="https://amethis.doctorat-bretagneloire.fr/amethis-client/formation/gestion/formation/${i.id}">${i.intitule}</a> 
                                 (${i.dureeFormatee})</b> - ${i.libelleCategorie} - <i> ${i.libelleOrganisateur}</i>
-                                ${i.convocation!==null? `</p>L'inscription ouvre le ${i.convocation.dateDebutCandidature}. <i><a href="https://amethis.cyclic.app/addReminder?id=${i.id}&mail=${mailAdresse}">Inscrition au rappel pour l'inscription à cette formation</a></i>.` : ""}
+                                ${i.convocation !== null ? `</p>L'inscription ouvre le ${i.convocation.dateDebutCandidature}. <i><a href="https://amethis.cyclic.app/addReminder?id=${i.id}&mail=${mailAdresse}">Inscrition au rappel pour l'inscription à cette formation</a></i>.` : ""}
                                 <ul>
                                 ${i.seances.map((seance: any) => {
                                     return `<li>${seance.dateSeance} (${seance.heureDebut}-${seance.heureFin}) - ${seance.adresse} (${seance.libelleSiteSession})</li>`
                                 }).join('')}
                                 </ul>`).join('</br>')}`
-                            }).then(() => console.log('mails sucessfully send to:'+mailAdresse)).catch(() => console.log('error sending mails'))
+                            }).then(() => console.log('mails sucessfully send to:' + mailAdresse)).catch(() => console.log('error sending mails'))
                         })
-                     
+
                     }
                 }
             }

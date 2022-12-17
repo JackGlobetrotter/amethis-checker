@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import { DEV } from ".";
 import { ERROR } from "./constants";
 import { getData } from "./cronCrontroller";
 import { clearAll, getMailinglist, sendCustomMessage } from "./mailinglistManager";
@@ -18,10 +19,10 @@ router.post('/addMail', validateMail, validatePassword, addMail)
 
 router.post('/removeMail', validateMail, validatePassword, removeMail)
 
-if (process.env.NODE_ENV === "development") {
+if (DEV) {
 
     router.get('/mailtest', async (req: express.Request, res: express.Response) => {
-        await sendCustomMessage("Test message from amethis-checker", "TEST MESSAGE FROM AMETHIS-CHECKER", (await getMailinglist())[0]);
+        await sendCustomMessage("Test message from amethis-checker", "TEST MESSAGE FROM AMETHIS-CHECKER", process.env.DEV_MAIL!);
         res.send("OK");
     })
     router.get('/clear', async (req: express.Request, res: express.Response) => {

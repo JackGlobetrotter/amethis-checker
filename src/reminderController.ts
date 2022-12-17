@@ -4,6 +4,7 @@ import AWS from "aws-sdk";
 import { mail } from "./mail";
 import axios from "axios";
 import bcrypt from 'bcrypt';
+import { DEV } from ".";
 
 const s3 = new AWS.S3();
 const reminderFile = process.env.REMINDERFILENAME || 'reminder.txt';
@@ -82,8 +83,8 @@ async function checkReminder(req: express.Request, res: express.Response) {
                 }).catch(() => console.log('error sending mails'))
 
             }
-            else{
-                (data[value.id] as any) = null; 
+            else {
+                (data[value.id] as any) = null;
             }
         }
     }));
@@ -123,7 +124,7 @@ async function addMailToReminder(req: express.Request, res: express.Response) {
     if (!mail || typeof mail !== "string")
         return res.send("INVALID MAIL");
 
-    const ml = await getMailinglist();
+    const ml = DEV ? [process.env.DEV_MAIL] : await getMailinglist();
     if (typeof mail == "string" && ml.includes(mail)) {
 
         const data = await getReminderData();

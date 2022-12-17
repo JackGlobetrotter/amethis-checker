@@ -17,4 +17,7 @@ app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
 });
 
+if (process.env.NODE_ENV === "development") 
+    console.warn("Attention running in dev mode");
 
+export const DEV = process.env.NODE_ENV === "development"; 
