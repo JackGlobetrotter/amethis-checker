@@ -30,10 +30,7 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
                 const rawData = file && file.Body ? file.Body.toString() : "";
 
                 let data: Array<string> = rawData.length > 0 ? JSON.parse(rawData) : new Array();
-
-                data = data.filter((d: any) => d.id !== '2553' && d.id !== '2490') //2490
-
-
+                
                 if (jsum.digest(data, "MD5", "hex") !== jsum.digest(res.data.data, "MD5", "hex")) {
                     console.log(`updating because: 1: ${jsum.digest(data, "MD5", "hex")}`)
                     console.log(`2: ${jsum.digest(res.data.data, "MD5", "hex")}`)
