@@ -48,7 +48,6 @@ const getData = async (req: Request, expressResponse: Response): Promise<Respons
 
                     const ml = DEV ? [process.env.DEV_MAIL] : await getMailinglist();
 
-
                     if (sendmail && ml.length > 0) {
 
                         const mailData = res.data.data.filter((i: any) => !oldIds.includes(i.id)).map((i: any) => {
